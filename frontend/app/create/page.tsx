@@ -19,7 +19,7 @@ export default function CreateWorkspacePage() {
           </Link>
           <div>
             <h1 className="text-3xl font-bold">Create Workspace</h1>
-            <p className="text-muted-foreground">Set up a new cross-chain freelance escrow</p>
+            <p className="text-muted-foreground">Set up a new AccorDefi escrow contract</p>
           </div>
         </div>
 

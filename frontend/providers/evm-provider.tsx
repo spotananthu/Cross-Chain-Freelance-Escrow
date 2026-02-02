@@ -13,8 +13,8 @@ const config = createConfig(
       [base.id]: http(),
     },
     walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
-    appName: 'Cross-Chain Freelance Escrow',
-    appDescription: 'Secure cross-chain freelance payments with milestone management',
+    appName: 'AccorDefi',
+    appDescription: 'Cross-chain escrow with integrated DeFi yield. Secure. Liquid. Decisive.',
     appUrl: 'https://crosschain-escrow.app',
     appIcon: 'https://crosschain-escrow.app/logo.png',
   })
