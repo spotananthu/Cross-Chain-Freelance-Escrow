@@ -1,0 +1,13 @@
+# Dependencies
+/lib/
+
+# Build
+/out/
+/cache/
+
+# Environment
+.env
+.env.local
+
+# Coverage
+lcov.info
