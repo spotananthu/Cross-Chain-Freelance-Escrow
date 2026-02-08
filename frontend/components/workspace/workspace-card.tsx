@@ -5,15 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { formatUSDC, formatAddress, getTimeRemaining } from '@/lib/utils'
-import { Clock, ExternalLink, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Clock, ExternalLink, CheckCircle2, AlertCircle, User, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
 interface WorkspaceCardProps {
   workspace: any
+  role?: 'client' | 'freelancer'
 }
 
-export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
+export function WorkspaceCard({ workspace, role }: WorkspaceCardProps) {
   const [timeLeft, setTimeLeft] = useState(getTimeRemaining(workspace.htlcExpiry))
 
   useEffect(() => {
@@ -24,38 +25,63 @@ export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
     return () => clearInterval(timer)
   }, [workspace.htlcExpiry])
 
-  const completedMilestones = workspace.milestones.filter(
-    (m: any) => m.status === 'APPROVED' || m.status === 'PAID'
-  ).length
-  const totalMilestones = workspace.milestones.length
+  const completedMilestones = workspace.milestones?.filter(
+    (m: any) => m.status === 'APPROVED' || m.status === 'PAID' || m.status === 'approved' || m.status === 'released'
+  ).length || 0
+  const totalMilestones = workspace.milestones?.length || 1
   const progress = (completedMilestones / totalMilestones) * 100
 
-  const statusColors = {
-    PENDING: 'warning',
-    LOCKED: 'default',
-    IN_PROGRESS: 'default',
-    COMPLETED: 'success',
-    REFUNDED: 'destructive',
-    DISPUTED: 'destructive',
-  } as const
+  // Status to badge variant and color mapping
+  const getStatusBadge = (status: string) => {
+    const normalizedStatus = status?.toLowerCase() || 'pending'
+    switch (normalizedStatus) {
+      case 'active':
+      case 'in_progress':
+      case 'locked':
+      case 'funded':
+        return { variant: 'default' as const, className: 'bg-blue-500 text-white hover:bg-blue-600' }
+      case 'completed':
+        return { variant: 'success' as const, className: 'bg-green-500 text-white hover:bg-green-600' }
+      case 'disputed':
+        return { variant: 'destructive' as const, className: '' }
+      case 'refunded':
+      case 'cancelled':
+        return { variant: 'secondary' as const, className: 'bg-gray-500 text-white' }
+      case 'pending':
+      default:
+        return { variant: 'warning' as const, className: 'bg-yellow-500 text-white hover:bg-yellow-600' }
+    }
+  }
+
+  const statusBadge = getStatusBadge(workspace.status)
+  const statusDisplay = workspace.status?.toUpperCase() || 'PENDING'
 
   return (
-    <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <CardTitle className="text-lg">Workspace #{workspace.id.slice(0, 8)}</CardTitle>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>Client: {workspace.clientEnsName || formatAddress(workspace.clientAddress)}</span>
-              <span>•</span>
-              <span>Freelancer: {workspace.freelancerEnsName || formatAddress(workspace.freelancerAddress)}</span>
+    <Link href={`/workspace/${workspace.id || 'unknown'}`}>
+      <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-lg">Workspace #{workspace.id?.slice(0, 8) || 'New'}</CardTitle>
+                {role && (
+                  <Badge variant="outline" className="text-xs">
+                    {role === 'client' ? <User className="h-3 w-3 mr-1" /> : <Users className="h-3 w-3 mr-1" />}
+                    {role === 'client' ? 'Client' : 'Freelancer'}
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>Client: {workspace.clientEnsName || formatAddress(workspace.clientAddress)}</span>
+                <span>•</span>
+                <span>Freelancer: {workspace.freelancerEnsName || formatAddress(workspace.freelancerAddress)}</span>
+              </div>
             </div>
+            <Badge variant={statusBadge.variant} className={statusBadge.className}>
+              {statusDisplay}
+            </Badge>
           </div>
-          <Badge variant={statusColors[workspace.status as keyof typeof statusColors]}>
-            {workspace.status}
-          </Badge>
-        </div>
-      </CardHeader>
+        </CardHeader>
 
       <CardContent className="space-y-4">
         {/* Amount */}
@@ -88,18 +114,14 @@ export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
           </div>
         )}
 
-        {/* Explorer Link */}
+        {/* Explorer Badge */}
         {workspace.suiObjectId && (
-          <Link
-            href={`https://suiexplorer.com/object/${workspace.suiObjectId}`}
-            target="_blank"
-            className="flex items-center gap-2 text-sm text-primary hover:underline"
-          >
-            View on Sui Explorer
-            <ExternalLink className="h-3 w-3" />
-          </Link>
+          <Badge variant="outline" className="text-xs">
+            Sui: {workspace.suiObjectId.slice(0, 8)}...
+          </Badge>
         )}
       </CardContent>
     </Card>
+    </Link>
   )
 }

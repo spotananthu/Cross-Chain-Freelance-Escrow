@@ -10,6 +10,10 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'AccorDefi',
   description: 'Cross-chain escrow with integrated DeFi yield. Secure. Liquid. Decisive.',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({
@@ -26,9 +30,9 @@ export default function RootLayout({
             <Image 
               src="/assets/bottom.png" 
               alt="" 
-              width={550} 
-              height={550}
-              className="absolute -bottom-14 right-0 dark:invert pointer-events-none"
+              width={350} 
+              height={350}
+              className="absolute -bottom-14 right-0 dark:invert pointer-events-none opacity-10"
             />
           </div>
         </Web3Provider>

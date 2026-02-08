@@ -28,10 +28,11 @@ contract DeployAccorDefi is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         // 1. Deploy Bridge first (with initial relayers)
+        // Use unique placeholder addresses if env vars not set
         address[] memory relayers = new address[](3);
         relayers[0] = deployer; // For testing, deployer is relayer
-        relayers[1] = vm.envOr("RELAYER_1", deployer);
-        relayers[2] = vm.envOr("RELAYER_2", deployer);
+        relayers[1] = vm.envOr("RELAYER_1", address(0x1111111111111111111111111111111111111111));
+        relayers[2] = vm.envOr("RELAYER_2", address(0x2222222222222222222222222222222222222222));
 
         AccorDefiBridge bridgeContract = new AccorDefiBridge(relayers);
         bridge = address(bridgeContract);

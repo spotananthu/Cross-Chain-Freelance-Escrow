@@ -24,6 +24,8 @@ app.use('*', prettyJSON());
 app.use('*', cors({
   origin: config.corsOrigins,
   credentials: true,
+  allowHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 }));
 
 // API Routes
@@ -65,19 +67,35 @@ app.onError((err, c) => {
 
 // Create HTTP server with Hono handler
 const httpServer = createServer(async (req, res) => {
+  // Collect request body
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) {
+    chunks.push(chunk);
+  }
+  const body = Buffer.concat(chunks);
+  
   const url = new URL(req.url || '/', `http://${req.headers.host}`);
-  const response = await app.fetch(new Request(url.toString(), {
+  
+  // Create proper Request with body
+  const requestInit: RequestInit = {
     method: req.method,
     headers: req.headers as HeadersInit,
-  }));
+  };
+  
+  // Only add body for methods that support it
+  if (req.method !== 'GET' && req.method !== 'HEAD' && body.length > 0) {
+    requestInit.body = body;
+  }
+  
+  const response = await app.fetch(new Request(url.toString(), requestInit));
   
   res.statusCode = response.status;
   response.headers.forEach((value, key) => {
     res.setHeader(key, value);
   });
   
-  const body = await response.text();
-  res.end(body);
+  const responseBody = await response.text();
+  res.end(responseBody);
 });
 
 // Socket.io for real-time updates

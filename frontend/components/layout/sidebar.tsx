@@ -8,10 +8,7 @@ import Link from 'next/link'
 import { 
   Wallet, 
   Home, 
-  Briefcase, 
   Plus, 
-  History, 
-  Settings,
   LogOut,
   ChevronLeft,
   ChevronRight
@@ -57,10 +54,7 @@ export function Sidebar({ className }: SidebarProps) {
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', href: '/dashboard' },
-    { icon: Briefcase, label: 'Workspaces', href: '/workspaces' },
     { icon: Plus, label: 'Create Workspace', href: '/create' },
-    { icon: History, label: 'Transactions', href: '/transactions' },
-    { icon: Settings, label: 'Settings', href: '/settings' },
   ]
 
   return (
