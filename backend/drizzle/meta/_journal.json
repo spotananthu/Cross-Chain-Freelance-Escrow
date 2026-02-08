@@ -1,0 +1,13 @@
+{
+  "version": "5",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1770543323030,
+      "tag": "0000_overrated_paladin",
+      "breakpoints": true
+    }
+  ]
+}

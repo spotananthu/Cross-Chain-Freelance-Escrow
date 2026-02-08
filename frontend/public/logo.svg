@@ -1,0 +1,46 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#gradient1)" />
+  
+  <!-- Inner glow -->
+  <circle cx="256" cy="256" r="200" fill="url(#gradient2)" opacity="0.3" />
+  
+  <!-- Chain Link 1 (Left - EVM/Ethereum) -->
+  <path d="M120 200 C120 170, 150 150, 180 150 L200 150 C230 150, 250 170, 250 200 L250 230 C250 260, 230 280, 200 280 L180 280 C150 280, 120 260, 120 230 Z" 
+        stroke="#60A5FA" stroke-width="24" fill="none" stroke-linecap="round"/>
+  
+  <!-- Chain Link 2 (Right - Sui) -->
+  <path d="M262 232 C262 202, 292 182, 322 182 L342 182 C372 182, 392 202, 392 232 L392 262 C392 292, 372 312, 342 312 L322 312 C292 312, 262 292, 262 262 Z" 
+        stroke="#4ADE80" stroke-width="24" fill="none" stroke-linecap="round"/>
+  
+  <!-- Connection Bridge (interlocking) -->
+  <path d="M200 215 L312 215" stroke="url(#bridgeGradient)" stroke-width="16" stroke-linecap="round" opacity="0.8"/>
+  <path d="M200 247 L312 247" stroke="url(#bridgeGradient)" stroke-width="16" stroke-linecap="round" opacity="0.8"/>
+  
+  <!-- Checkmark/Shield accent -->
+  <path d="M256 340 L230 370 L256 400 L310 350" stroke="white" stroke-width="16" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Letter A stylized -->
+  <text x="256" y="440" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white" text-anchor="middle" opacity="0.9">AccorDefi</text>
+  
+  <defs>
+    <!-- Main gradient - purple to blue -->
+    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E1B4B"/>
+      <stop offset="50%" style="stop-color:#312E81"/>
+      <stop offset="100%" style="stop-color:#1E3A5F"/>
+    </linearGradient>
+    
+    <!-- Inner glow gradient -->
+    <radialGradient id="gradient2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#818CF8"/>
+      <stop offset="100%" style="stop-color:#1E1B4B"/>
+    </radialGradient>
+    
+    <!-- Bridge gradient - blue to green -->
+    <linearGradient id="bridgeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#60A5FA"/>
+      <stop offset="100%" style="stop-color:#4ADE80"/>
+    </linearGradient>
+  </defs>
+</svg>

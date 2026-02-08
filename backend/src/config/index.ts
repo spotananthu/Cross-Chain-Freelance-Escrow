@@ -8,7 +8,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string().default('file:./data/accordefi.db'),
   
   // CORS
-  CORS_ORIGINS: z.string().default('http://localhost:3000'),
+  CORS_ORIGINS: z.string().default('http://localhost:3000,http://localhost:3001'),
   
   // EVM Configuration
   EVM_RPC_URL: z.string().default('http://localhost:8545'),

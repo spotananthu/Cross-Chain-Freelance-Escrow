@@ -4,6 +4,8 @@ import { db, milestones, escrows, notifications } from '../db';
 import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { io } from '../index';
+import { generateSecretPair } from '../integrations/fusion-plus';
+import { bridgeRelayer } from '../integrations/bridge-relayer';
 
 export const milestoneRoutes = new Hono();
 
@@ -115,35 +117,79 @@ milestoneRoutes.post('/:id/approve', async (c) => {
   }
 });
 
-// POST /api/milestones/:id/release - Mark milestone as released
+// POST /api/milestones/:id/release - Mark milestone as released with cross-chain payment
 milestoneRoutes.post('/:id/release', async (c) => {
   const { id } = c.req.param();
   
   try {
-    const body = await c.req.json();
+    const body = await c.req.json().catch(() => ({}));
     const { txHash } = body;
+    
+    // Get milestone first to get escrow info
+    const milestone = await db.query.milestones.findFirst({
+      where: eq(milestones.id, id),
+      with: { escrow: true },
+    });
+    
+    if (!milestone) {
+      return c.json({ success: false, error: 'Milestone not found' }, 404);
+    }
+    
+    // Check if milestone is approved first
+    if (milestone.status !== 'approved') {
+      return c.json({ 
+        success: false, 
+        error: 'Milestone must be approved before releasing payment' 
+      }, 400);
+    }
+    
+    // Generate secret pair for HTLC cross-chain payment
+    const secretPair = generateSecretPair();
+    
+    // Get Sui recipient address
+    const suiRecipient = milestone.escrow?.suiRecipient;
+    
+    console.log('[Release] Cross-chain payment initiated:', {
+      milestoneId: id,
+      escrowId: milestone.escrowId,
+      amount: milestone.amount,
+      suiRecipient,
+      secretHash: secretPair.secretHashHex,
+    });
+    
+    // Execute bridge transfer to Sui
+    let bridgeResult: { success: boolean; digest?: string; error?: string } = { success: false };
+    if (suiRecipient) {
+      const amountMist = bridgeRelayer.usdToSui(parseFloat(String(milestone.amount)));
+      bridgeResult = await bridgeRelayer.executeBridgeTransfer(
+        suiRecipient,
+        amountMist,
+        {
+          escrowId: milestone.escrowId,
+          milestoneId: id,
+          secretHash: secretPair.secretHashHex,
+        }
+      );
+      console.log('[Release] Bridge transfer result:', bridgeResult);
+    }
     
     await db.update(milestones)
       .set({
         status: 'released',
         releasedAt: new Date(),
-        releaseTxHash: txHash,
+        releaseTxHash: txHash || `demo_${Date.now()}`,
         updatedAt: new Date(),
       })
       .where(eq(milestones.id, id));
     
     // Check if all milestones are released
-    const milestone = await db.query.milestones.findFirst({
-      where: eq(milestones.id, id),
-    });
-    
     if (milestone) {
       const allMilestones = await db.query.milestones.findMany({
         where: eq(milestones.escrowId, milestone.escrowId),
       });
       
       const allReleased = allMilestones.every(m => 
-        m.status === 'released' || m.status === 'refunded'
+        m.id === id || m.status === 'released' || m.status === 'refunded'
       );
       
       if (allReleased) {
@@ -156,8 +202,54 @@ milestoneRoutes.post('/:id/release', async (c) => {
       }
     }
     
-    return c.json({ success: true, message: 'Milestone released' });
+    // Notify freelancer
+    if (milestone.escrow?.freelancerId) {
+      await db.insert(notifications).values({
+        id: randomUUID(),
+        userId: milestone.escrow.freelancerId,
+        type: 'milestone_released',
+        title: 'Payment Released!',
+        message: `Payment of ${milestone.amount} ${milestone.escrow.tokenSymbol} has been released`,
+        data: JSON.stringify({ 
+          milestoneId: id, 
+          escrowId: milestone.escrowId,
+          amount: milestone.amount,
+          secretHash: secretPair.secretHashHex,
+        }),
+      });
+      
+      io?.to(`user:${milestone.escrow.freelancerId}`).emit('notification', {
+        type: 'milestone_released',
+        milestoneId: id,
+        amount: milestone.amount,
+      });
+    }
+    
+    return c.json({ 
+      success: true, 
+      message: 'Payment released successfully!',
+      data: {
+        milestoneId: id,
+        escrowId: milestone.escrowId,
+        amount: milestone.amount,
+        suiRecipient: milestone.escrow?.suiRecipient,
+        bridge: {
+          success: bridgeResult.success,
+          suiTxDigest: bridgeResult.digest,
+          error: bridgeResult.error,
+          amountSui: bridgeRelayer.formatSui(bridgeRelayer.usdToSui(parseFloat(String(milestone.amount)))),
+        },
+        crossChain: {
+          secretHash: secretPair.secretHashHex,
+          secret: secretPair.secretHex, // Demo only - in prod, sent to freelancer securely
+          note: bridgeResult.success 
+            ? `SUI sent to ${milestone.escrow?.suiRecipient} - TX: ${bridgeResult.digest}`
+            : 'Bridge in simulation mode - configure BRIDGE_PRIVATE_KEY to enable real transfers',
+        },
+      },
+    });
   } catch (error) {
+    console.error('Release error:', error);
     return c.json({ success: false, error: 'Failed to release milestone' }, 500);
   }
 });
